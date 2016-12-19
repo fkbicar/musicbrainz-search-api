@@ -1,0 +1,203 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+      <Schema Namespace="MusicBrainzDBModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="Alias">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="artistid" Type="int" Nullable="false" />
+          <Property Name="aliasname" Type="nvarchar" MaxLength="100" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Artist">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="artistname" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="country" Type="varchar" MaxLength="10" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Identifier">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="artistid" Type="int" Nullable="false" />
+          <Property Name="uniqueid" Type="nvarchar" MaxLength="100" Nullable="false" />
+        </EntityType>
+        <Association Name="FK_Artist_Alias">
+          <End Role="Artist" Type="Self.Artist" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="Alias" Type="Self.Alias" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Artist">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Alias">
+              <PropertyRef Name="artistid" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Artist_ID">
+          <End Role="Artist" Type="Self.Artist" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="Identifier" Type="Self.Identifier" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Artist">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Identifier">
+              <PropertyRef Name="artistid" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="MusicBrainzDBModelStoreContainer">
+          <EntitySet Name="Alias" EntityType="Self.Alias" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Artist" EntityType="Self.Artist" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Identifier" EntityType="Self.Identifier" Schema="dbo" store:Type="Tables" />
+          <AssociationSet Name="FK_Artist_Alias" Association="Self.FK_Artist_Alias">
+            <End Role="Artist" EntitySet="Artist" />
+            <End Role="Alias" EntitySet="Alias" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Artist_ID" Association="Self.FK_Artist_ID">
+            <End Role="Artist" EntitySet="Artist" />
+            <End Role="Identifier" EntitySet="Identifier" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
+    </edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="MusicBrainzDBModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="Alias">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="artistid" Type="Int32" Nullable="false" />
+          <Property Name="aliasname" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
+          <NavigationProperty Name="Artist" Relationship="Self.FK_Artist_Alias" FromRole="Alias" ToRole="Artist" />
+        </EntityType>
+        <EntityType Name="Artist">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="artistname" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="country" Type="String" MaxLength="10" FixedLength="false" Unicode="false" Nullable="false" />
+          <NavigationProperty Name="Aliases" Relationship="Self.FK_Artist_Alias" FromRole="Artist" ToRole="Alias" />
+          <NavigationProperty Name="Identifiers" Relationship="Self.FK_Artist_ID" FromRole="Artist" ToRole="Identifier" />
+        </EntityType>
+        <EntityType Name="Identifier">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="artistid" Type="Int32" Nullable="false" />
+          <Property Name="uniqueid" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
+          <NavigationProperty Name="Artist" Relationship="Self.FK_Artist_ID" FromRole="Identifier" ToRole="Artist" />
+        </EntityType>
+        <Association Name="FK_Artist_Alias">
+          <End Role="Artist" Type="Self.Artist" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="Alias" Type="Self.Alias" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Artist">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Alias">
+              <PropertyRef Name="artistid" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Artist_ID">
+          <End Role="Artist" Type="Self.Artist" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="Identifier" Type="Self.Identifier" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Artist">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Identifier">
+              <PropertyRef Name="artistid" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="MusicBrainzDBEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="Aliases" EntityType="Self.Alias" />
+          <EntitySet Name="Artists" EntityType="Self.Artist" />
+          <EntitySet Name="Identifiers" EntityType="Self.Identifier" />
+          <AssociationSet Name="FK_Artist_Alias" Association="Self.FK_Artist_Alias">
+            <End Role="Artist" EntitySet="Artists" />
+            <End Role="Alias" EntitySet="Aliases" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Artist_ID" Association="Self.FK_Artist_ID">
+            <End Role="Artist" EntitySet="Artists" />
+            <End Role="Identifier" EntitySet="Identifiers" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="MusicBrainzDBModelStoreContainer" CdmEntityContainer="MusicBrainzDBEntities">
+          <EntitySetMapping Name="Aliases">
+            <EntityTypeMapping TypeName="MusicBrainzDBModel.Alias">
+              <MappingFragment StoreEntitySet="Alias">
+                <ScalarProperty Name="id" ColumnName="id" />
+                <ScalarProperty Name="artistid" ColumnName="artistid" />
+                <ScalarProperty Name="aliasname" ColumnName="aliasname" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Artists">
+            <EntityTypeMapping TypeName="MusicBrainzDBModel.Artist">
+              <MappingFragment StoreEntitySet="Artist">
+                <ScalarProperty Name="id" ColumnName="id" />
+                <ScalarProperty Name="artistname" ColumnName="artistname" />
+                <ScalarProperty Name="country" ColumnName="country" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Identifiers">
+            <EntityTypeMapping TypeName="MusicBrainzDBModel.Identifier">
+              <MappingFragment StoreEntitySet="Identifier">
+                <ScalarProperty Name="id" ColumnName="id" />
+                <ScalarProperty Name="artistid" ColumnName="artistid" />
+                <ScalarProperty Name="uniqueid" ColumnName="uniqueid" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="true" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>
