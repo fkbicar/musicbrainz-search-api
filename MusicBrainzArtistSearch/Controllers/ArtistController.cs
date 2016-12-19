@@ -93,9 +93,32 @@ namespace MusicBrainzArtistSearch.Controllers
 
         [Route("{artistId:guid?}/releases")]
         [HttpGet]
-        public HttpResponseMessage Get(Guid artistId)
+        public HttpResponseMessage GetArtistReleases(Guid artistId)
         {
-            var releases = _apiRepo.GetArtistReleases(artistId);
+            var uri = Request.RequestUri;
+            var paramList = uri.ToString().Split('/');
+            string param = paramList[paramList.Length - 1];
+
+            var releases = _apiRepo.GetArtistReleasesOrAlbums(artistId, param);
+            if (releases != null)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, releases);
+            }
+            else
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Not Found");
+            }
+        }
+
+        [Route("{artistId:guid?}/albums")]
+        [HttpGet]
+        public HttpResponseMessage GetArtistAlbums(Guid artistId)
+        {
+            var uri = Request.RequestUri;
+            var paramList = uri.ToString().Split('/');
+            string param = paramList[paramList.Length - 1];
+
+            var releases = _apiRepo.GetArtistReleasesOrAlbums(artistId, param);
             if (releases != null)
             {
                 return Request.CreateResponse(HttpStatusCode.OK, releases);

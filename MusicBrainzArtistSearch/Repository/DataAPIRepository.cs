@@ -20,9 +20,8 @@ namespace MusicBrainzArtistSearch.Repository
             this._db = db;
         }
 
-        public List<ReleaseDataModels> GetArtistReleases(Guid artistId)
+        public List<ReleaseDataModels> GetArtistReleasesOrAlbums(Guid artistId, string param)
         {
-            //var artistQuery = from a in _db.Identifiers where a.uniqueid.Equals(artistId) select a;
             bool artistQuery = _db.Identifiers.Any(id => id.uniqueid.Equals(artistId.ToString()));
 
             if (artistQuery == false)
@@ -30,28 +29,22 @@ namespace MusicBrainzArtistSearch.Repository
                 return null;
             }
 
+            string musicBrainzURL = "http://musicbrainz.org/ws/2/release?query=arid:" + artistId + "&fmt=json&include=all";
+
             var handler = new HttpClientHandler { AllowAutoRedirect = false };
             var httpClient = new HttpClient(handler);
             httpClient.DefaultRequestHeaders.Add("User-Agent",
                                              "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; WOW64; Trident/6.0)");
 
-            httpClient.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/xml"));
-
-            string parameters = "http://musicbrainz.org/ws/2/release/?query=arid:" + artistId;
-
-            var response = httpClient.GetAsync(parameters).Result;
-
+            var response = httpClient.GetAsync(musicBrainzURL).Result;
             if (response.IsSuccessStatusCode)
             {
-                //for xml
-                string xmlResponseData = response.Content.ReadAsStringAsync().Result;
-                XDocument doc = XDocument.Parse(xmlResponseData, LoadOptions.None);
+                string jsonResponseData = response.Content.ReadAsStringAsync().Result;
+                JObject json = JObject.Parse(jsonResponseData);
 
-                //process XML
-                List<ReleaseDataModels> releaseDataList = ProcessResponse(doc);
-
-                if(releaseDataList.Count == 0)
+                //process json object
+                List<ReleaseDataModels> releaseDataList = ProcessResponse(json, param);
+                if (releaseDataList.Count == 0)
                 {
                     return null;
                 }
@@ -66,44 +59,50 @@ namespace MusicBrainzArtistSearch.Repository
             }
         }
 
-        private List<ReleaseDataModels> ProcessResponse(XDocument doc)
+        private List<ReleaseDataModels> ProcessResponse(JObject jsonObject, string type)
         {
-            XNamespace ns = "http://musicbrainz.org/ns/mmd-2.0#";
             List<ReleaseDataModels> releaseDataList = new List<ReleaseDataModels>();
 
-            IEnumerable<XElement> rows = doc.Descendants(ns + "release");
-
-            foreach(XElement releaseNode in rows)
+            var releaseList = from release in jsonObject["releases"] select release;
+            foreach(var release in releaseList)
             {
-                List<OtherArtistDataModels> releaseArtistList = new List<OtherArtistDataModels>();
-                List<ArtistLabelDataModels> labelArtistList = new List<ArtistLabelDataModels>();
-                ReleaseDataModels releaseDataNode = new ReleaseDataModels();
+                ReleaseDataModels releaseDataNode = new ReleaseDataModels(); //main container
+                List<OtherArtistDataModels> releaseArtistList = new List<OtherArtistDataModels>(); //artist collaborators
+                List<ArtistLabelDataModels> labelArtistList = new List<ArtistLabelDataModels>(); //labels
 
+                var releaseType = (string) release["release-group"]["primary-type"];
 
-                string releaseId = AttributeValueNull(releaseNode, "id");
-                string releaseTitle = ElementValueNull(releaseNode.Element(ns + "title"));
-                string releaseStatus = ElementValueNull(releaseNode.Element(ns + "status"));
-
-                XElement mediumList = releaseNode.Element(ns + "medium-list");
-                string releaseTrackCount = ElementValueNull(mediumList.Element(ns + "track-count"));
-
-                IEnumerable<XElement> labels = releaseNode.Descendants(ns + "label");
-                foreach (XElement label in labels)
-                {
-                    labelArtistList.Add(new ArtistLabelDataModels(AttributeValueNull(label, "id"), ElementValueNull(label.Element(ns + "name"))));
+                //break if release not Album type
+                if (type.Equals("albums")) {
+                    if ((releaseType == null) || !(releaseType.Equals("Album")))
+                    {
+                        continue;
+                    }
                 }
 
+                releaseDataNode.releaseId = (string) release["id"];
+                releaseDataNode.title = (string) release["title"];
+                releaseDataNode.status = (string) release["status"];
+                releaseDataNode.numberOfTracks = (string) release["track-count"];
+                releaseDataNode.type = releaseType;
 
-                IEnumerable<XElement> artists = releaseNode.Descendants(ns + "artist");
-                foreach(XElement artist in artists)
+                var artistCreditList = release["artist-credit"];
+                if (artistCreditList != null)
                 {
-                    releaseArtistList.Add(new OtherArtistDataModels(AttributeValueNull(artist, "id"), ElementValueNull(artist.Element(ns + "name"))));
+                    foreach (var artistObj in artistCreditList)
+                    {
+                        releaseArtistList.Add(new OtherArtistDataModels((string)artistObj["artist"]["id"], (string)artistObj["artist"]["name"]));
+                    }
                 }
 
-                releaseDataNode.releaseId = releaseId;
-                releaseDataNode.title = releaseTitle;
-                releaseDataNode.status = releaseStatus;
-                releaseDataNode.numberOfTracks = releaseTrackCount;
+                var labelInfoList = release["label-info"];
+                if (labelInfoList != null)
+                {
+                    foreach (var labelObj in labelInfoList)
+                    {
+                        labelArtistList.Add(new ArtistLabelDataModels((string)labelObj["label"]["id"], (string)labelObj["label"]["name"]));
+                    }
+                }
 
                 releaseDataNode.label = labelArtistList;
                 releaseDataNode.otherArtists = releaseArtistList;
@@ -112,25 +111,6 @@ namespace MusicBrainzArtistSearch.Repository
             }
 
             return releaseDataList;
-        }
-
-        private string ElementValueNull(XElement element)
-        {
-            if (element != null)
-                return element.Value;
-
-            return "";
-        }
-
-        private string AttributeValueNull(XElement element, string attributeName)
-        {
-            if (element == null)
-                return "";
-            else
-            {
-                XAttribute attr = element.Attribute(attributeName);
-                return attr == null ? "" : attr.Value;
-            }
         }
     }
 }

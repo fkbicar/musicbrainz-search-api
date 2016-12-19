@@ -11,6 +11,7 @@ namespace MusicBrainzArtistSearch.Models
         public string title { get; set; }
         public string status { get; set; }
         public string numberOfTracks { get; set; }
+        public string type { get; set; }
         public List<OtherArtistDataModels> otherArtists { get; set; }
         public List<ArtistLabelDataModels> label { get; set; }
         

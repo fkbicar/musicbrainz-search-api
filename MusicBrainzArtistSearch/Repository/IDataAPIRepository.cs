@@ -9,6 +9,6 @@ namespace MusicBrainzArtistSearch.Repository
 {
     public interface IDataAPIRepository
     {
-        List<ReleaseDataModels> GetArtistReleases(Guid artistId);
+        List<ReleaseDataModels> GetArtistReleasesOrAlbums(Guid artistId, string param);
     }
 }
